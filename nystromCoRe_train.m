@@ -1,4 +1,4 @@
-function [ output ] = nystromRegularization_train( X , Y , varargin )
+function [ output ] = nystromCoRe_train( X , Y , varargin )
 %     nystromRegularization Nystrom computational regularization - Early Stopping cross validation
 %       Performs selection of the Nystrom regularization parameter
 %       (subsampling level m)
@@ -70,6 +70,8 @@ function [ output ] = nystromRegularization_train( X , Y , varargin )
 %                   validationError
 %                   m
 %                   alpha
+%                   lambda
+%                   lambdaIdx
 %     
 %              nysIdx : Vector - selected Nystrom approximation indexes
 %     
@@ -97,23 +99,32 @@ function [ output ] = nystromRegularization_train( X , Y , varargin )
     output.best = struct();
 %     output.best.alpha = zeros(config.kernel.m,t);
 
-    if isempty(config.filter.fixedM) && isempty(config.filter.numStepsM)
+    if isempty(config.kernel.fixedM) && isempty(config.kernel.numStepsM)
 
         error('Specify either a fixed or a number of steps for the subsampling level m')
 
-    elseif isempty(config.filter.fixedM) && ~isempty(config.filter.numStepsM) 
+    elseif (isempty(config.kernel.fixedM) && ~isempty(config.kernel.numStepsM)) || ...
+           (~isempty(config.kernel.fixedM) && config.filter.numLambdaGuesses > 1 ) 
         
-        config.kernel.mGuesses = round(linspace(config.kernel.minM, config.kernel.maxM , config.kernel.numStepsM));
+       
+        % Set m range
+        if isempty(config.kernel.fixedM) && ~isempty(config.kernel.numStepsM)
+            
+            config.kernel.mGuesses = round(linspace(config.kernel.minM, config.kernel.maxM , config.kernel.numStepsM));
+            output.best.m = config.kernel.maxM;
+        else
+            config.kernel.mGuesses = config.kernel.fixedM;
+            output.best.m = config.kernel.fixedM;        
+            config.kernel.numStepsM = 1;
+        end
 
         %%% Perform cross validation
-
         output.best.validationError = Inf;
-        output.best.m = config.kernel.maxM;
 
         % Error buffers
-        output.errorPath.validation = zeros(1,config.kernel.numStepsM) * NaN;
+        output.errorPath.validation = zeros(config.filter.numLambdaGuesses,config.kernel.numStepsM) * NaN;
         if config.crossValidation.storeTrainingError == 1
-            output.errorPath.training = zeros(1,config.kernel.numStepsM) * NaN;
+            output.errorPath.training = zeros(config.filter.numLambdaGuesses,config.kernel.numStepsM) * NaN;
         else
             output.errorPath.training = [];
         end
@@ -144,6 +155,10 @@ function [ output ] = nystromRegularization_train( X , Y , varargin )
         Ytr1 = Y(trainIdx,:);
         Xval = X(valIdx,:);
         Yval = Y(valIdx,:);
+        X(1 : ntr1 , :) = X(trainIdx , :);
+        X(ntr1 + 1 : end , :) = X(valIdx , :);
+        Y(1 : ntr1 , :) = Y(trainIdx , :);
+        Y(ntr1 + 1 : end , :) = Y(valIdx , :);
 
         for i = 1:config.filter.numLambdaGuesses
             
@@ -153,10 +168,6 @@ function [ output ] = nystromRegularization_train( X , Y , varargin )
 
                 m = config.kernel.mGuesses(j);
                 
-                if storeFullTrainTime == 1
-                    tic
-                end
-
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % Incremental Update Rule %
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -180,8 +191,7 @@ function [ output ] = nystromRegularization_train( X , Y , varargin )
                     Xs = Xtr1(samp,:);
                     
                     tic
-                    SqDistMat = computeSqDistMat(Xtr1 , Xs);
-                    A(:,samp) = exp( - SqDistMat / (2 * config.kernel.kernelParameter^2) );
+                    A(:,samp) = config.kernel.kernelFunction(Xtr1 , Xs , config.kernel.kernelParameter);
                     B = A(samp,samp);
                     output.time.kernelComputation = output.time.kernelComputation + toc;
                     
@@ -212,8 +222,7 @@ function [ output ] = nystromRegularization_train( X , Y , varargin )
                     
                     % Computer a, b, beta
                     tic
-                    SqDistMat = computeSqDistMat(Xtr1 , XsNew);
-                    a = exp( - SqDistMat / (2 * config.kernel.kernelParameter^2) ) ;
+                    a = config.kernel.kernelFunction(Xtr1 , XsNew , config.kernel.kernelParameter);
                     output.time.kernelComputation = output.time.kernelComputation + toc;
                     
                     b = a( 1:mPrev , : );
@@ -221,8 +230,8 @@ function [ output ] = nystromRegularization_train( X , Y , varargin )
 
                     tic
                     % Compute c, gamma
-                    c = A(:,1:mPrev)' * a + ntr1 * filterParGuesses(k) * b;
-                    gamma = a' * a + ntr1 * filterParGuesses(k) * beta;
+                    c = A(:,1:mPrev)' * a + ntr1 * l * b;
+                    gamma = a' * a + ntr1 * l * beta;
 
                     % Update A, Aty
                     A( : , (mPrev+1) : m ) = a ;
@@ -255,10 +264,10 @@ function [ output ] = nystromRegularization_train( X , Y , varargin )
                 
                 % Initialize TrainVal kernel       
                 tic
-                Kval = config.kernel.kernelFunction(Xval, Xs);
+                Kval = config.kernel.kernelFunction(Xval, Xs , config.kernel.kernelParameter);
 
                 % Compute validation predictions matrix
-                YvalPred = Kval * alpha{k};
+                YvalPred = Kval * alpha{i};
 
                 % Compute validation performance
                 if ~isempty(config.crossValidation.codingFunction)
@@ -278,95 +287,99 @@ function [ output ] = nystromRegularization_train( X , Y , varargin )
 
                     % Compute training performance
                     if ~isempty(config.crossValidation.codingFunction)
-                        YvalPred = config.crossValidation.codingFunction(YvalPred);
+                        YtrainPred = config.crossValidation.codingFunction(YtrainPred);
                     end
-                    output.errorPath.training(i,j) = config.crossValidation.errorFunction(Yval , YvalPred);                    
-                    output.errorPath.training(i,j) = performanceMeasure( Ytrain , YtrainPred , trainIdx );
+                    output.errorPath.training(i,j) = config.crossValidation.errorFunction(Ytr1 , YtrainPred);                    
                 end
 
                 %%%%%%%%%%%%%%%%%%%%
                 % Store best model %
                 %%%%%%%%%%%%%%%%%%%%
-                if output.errorPath.validation(i,j) < valM
+                if output.errorPath.validation(i,j) < output.best.validationError
 
-                    %Update best filter parameter
-                    outpfilterParStar = filterParGuesses(i);
-                    filterParStarIdx = i;
-
-                    %Update best validation performance measurement
-                    valM = valPerf;
+                    % Update best filter parameter
+                    output.best.lambda = l;
+                    output.best.lambdaIdx = i;
+                    
+                    % Update best sampling level m
+                    output.best.m = m;
 
                     % Update internal model samples matrix
-                    Xmodel = nyMapper.Xs;
+                    output.best.sampledPoints = Xs;
+                    
+                    %Update best validation performance measurement
+                    output.best.validationError = output.errorPath.validation(i,j);
 
                     % Update coefficients vector
-                    c = nyMapper.alpha{i};
+                    output.best.alpha = alpha{i};
                 end
-
-                
-                output.time.crossValidationTotal = output.time.crossValidationTrain + output.time.crossValidationEval ;                
             end
-        end  
+        end
+        
+        output.time.crossValidationTotal = output.time.crossValidationTrain + output.time.crossValidationEval ;
 
         if config.crossValidation.recompute == 1
 
             %%% Retrain on whole dataset
 
             tic
-            beta = zeros(config.kernel.m,t);
-            if isempty(config.filter.gamma)
-                gamma = 1/(norm(Knm/R))^2;
-            else
-                gamma = config.filter.gamma;
-            end
 
-            % Compute solution
-            for iter = 1:output.best.iteration
-                % Update filter
-                beta = beta -  gamma * (R' \ ( Knm' * ( Knm * (R \ beta) - Y ) ) );
-            end
+            % Sample columns and compute
+            samp = 1:output.best.m;
+            Xs = Xtr1(samp,:);
 
-            output.best.alpha = R\beta; % Get alpha from beta
+            A = config.kernel.kernelFunction(X , Xs , config.kernel.kernelParameter);
+            B = A(samp,samp);
 
-            output.time.fullTraining = toc;
+            tic
+            Aty = A(:,samp)' * Y;
+                    
+            R = chol(full(A(:,1:output.best.m)' * A(:,1:output.best.m) ) + ...
+                ntr * output.best.lambda * B);
+
+            % alpha
+            output.best.recomputedAlpha = 	R \ ( R' \ ( Aty ) );            
+            
+            output.time.retraining = toc;
         end
 
 
-    elseif ~isempty(config.filter.fixedIterations)
+    elseif ~isempty(config.kernel.fixedM) && numel(config.filter.lambdaGuesses) == 1
 
-        %%% Just train
+        %%% Just train on whole dataset
         
-%         % Initialize Train kernel
-% 
-%         % Subsample training examples for Nystrom approximation
-%         nysIdx = randperm(ntr , config.kernel.m);
-%         output.nysIdx = nysIdx;
-% 
-%         % Compute kernels
-%         tic
-%         Knm = config.kernel.kernelFunction(X, X(nysIdx,:), config.kernel.kernelParameters);
-%         Kmm = Knm(nysIdx,:);
-%         R = chol( ( Kmm + Kmm') / 2 + 1e-10 * eye(config.kernel.m));  % Compute upper Cholesky factor of Kmm    
-%         output.time.kernelComputation = toc;
-% 
-%         tic
-%         beta = zeros(config.kernel.m,t);
-%         if isempty(config.filter.gamma)
-%             gamma = 1/(norm(Knm/R))^2;
-%         else
-%             gamma = config.filter.gamma;
-%         end
-% 
-%         % Compute solution with a fixed number of steps
-%         for iter = 1:config.filter.fixedIterations
-%             % Update filter
-%             beta = beta -  gamma * (R' \ ( Knm' * ( Knm * (R \ beta) - Y ) ) );
-%         end
-% 
-%         output.best.alpha = R\beta; % Get alpha from beta
-% 
-%         output.time.fullTraining = toc;
-    end
+        tic
+        % Sample columns and compute
+        if config.data.shuffle == 1
 
-    output.config = config;
+            samp = randperm(ntr);
+            X = X(samp , :);
+            Y = Y(samp , :);
+            Xs = X(1:config.kernel.fixedM,:);
+
+        else
+            samp = 1:config.kernel.fixedM;
+            Xs = X(samp,:);
+        end
+
+        A(:,1:config.kernel.fixedM) = config.kernel.kernelFunction(X , Xs , config.kernel.kernelParameter);
+        B = A(1:config.kernel.fixedM,1:config.kernel.fixedM);
+
+        Aty(1:config.kernel.fixedM,:) = A(:,1:config.kernel.fixedM)' * Y;
+
+        R(1:config.kernel.fixedM,1:config.kernel.fixedM) = ...
+            chol(full(A(:,1:config.kernel.fixedM)' * A(:,1:config.kernel.fixedM) ) + ...
+            ntr * config.filter.lambdaGuesses * B);
+
+        % alpha
+        output.best.alpha = 	R(1:config.kernel.fixedM,1:config.kernel.fixedM) \ ...
+            ( R(1:config.kernel.fixedM,1:config.kernel.fixedM)' \ ...
+            ( Aty(1:config.kernel.fixedM,:) ) );   
+        
+        output.time.fullTraining = toc;
+        output.best.sampledPoints = Xs;
+        output.best.lambda = config.filter.lambdaGuesses;
+    end
+    
+    output.config = config;    
 end

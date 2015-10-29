@@ -24,11 +24,11 @@ function [ config ] = config_set( varargin )
 
     % kernel
     config.kernel.kernelFunction  = @gaussianKernel;
-    config.kernel.kernelParameters = 1;
+    config.kernel.kernelParameter = 1;
     config.kernel.fixedM = [];
     config.kernel.minM = 10;
     config.kernel.maxM = 100;
-    config.kernel.numStepsM = 10;
+    config.kernel.numStepsM = 91;
 
     % Parse function inputs
     if ~isempty(varargin)
@@ -54,5 +54,11 @@ function [ config ] = config_set( varargin )
             eval(cmdStr);
         end
     end
-end
+    
+    % Checks
 
+    if config.filter.numLambdaGuesses  ~= numel(config.filter.lambdaGuesses)
+        display(['Number of lambda guesses set to ' , num2str(numel(config.filter.lambdaGuesses))])
+        config.filter.numLambdaGuesses  = numel(config.filter.lambdaGuesses);
+    end
+end
