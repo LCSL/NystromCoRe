@@ -5,6 +5,7 @@
 The NystromCoRe Matlab Package
 ========================
 ***Less is More: Nystrom Computational Regularization***
+
 ![LIM1](http://s4.postimg.org/e8cnt4sst/LIS1.png)
 
 
