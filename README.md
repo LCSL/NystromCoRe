@@ -1,13 +1,12 @@
 
 
 
-![LIM1](http://s4.postimg.org/e8cnt4sst/LIS1.png)
-
+![LIM2](http://s22.postimg.org/x4jihvp0x/lim2.png)
 The NystromCoRe Matlab Package
 ========================
 ***Less is More: Nystrom Computational Regularization***
+![LIM1](http://s4.postimg.org/e8cnt4sst/LIS1.png)
 
-![LIM2](http://s22.postimg.org/x4jihvp0x/lim2.png)
 
 
 
