@@ -2,13 +2,10 @@
 load breastcancer
 
 % Customize configuration
-config = config_set('crossValidation.threshold' , -0.002 , ...      % Change stopping rule threshold
-                    'crossValidation.recompute' , 1 , ...           % Recompute the solution after cross validation
+config = config_set('crossValidation.recompute' , 1 , ...           % Recompute the solution after cross validation
                     'crossValidation.codingFunction' , @zeroOneBin , ...   % Change coding function
                     'crossValidation.errorFunction' , @classificationError , ...   % Change error function
-                    'crossValidation.stoppingRule' , @windowSimple , ...   % Change stopping rule function
-                    'kernel.m' , 200 , ...                          % Modify the subsampling level (default m = 100)
-                    'kernel.kernelParameters' , 0.9 , ...           % Change gaussian kernel parameter (sigma)
+                    'kernel.kernelParameter' , 0.9 , ...           % Change gaussian kernel parameter (sigma)
                     'kernel.kernelFunction' , @gaussianKernel);     % Change kernel function
 
 % Perform default cross validation
