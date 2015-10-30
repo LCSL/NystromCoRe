@@ -1,0 +1,322 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>NystromCoRe by LCSL</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-dark.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/main.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+
+      <header>
+        <h1>NystromCoRe</h1>
+        <p>Less is More: Nyström Computational Regularization</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+
+        <a href="https://github.com/LCSL/NystromCoRe" class="button fork"><strong>View On GitHub</strong></a>
+        <div class="downloads">
+          <span>Downloads:</span>
+          <ul>
+            <li><a href="https://github.com/LCSL/NystromCoRe/zipball/master" class="button">ZIP</a></li>
+            <li><a href="https://github.com/LCSL/NystromCoRe/tarball/master" class="button">TAR</a></li>
+          </ul>
+        </div>
+      </div><!-- end banner -->
+
+    <div class="wrapper">
+      <nav>
+        <ul></ul>
+      </nav>
+      <section>
+        <p><img src="http://s22.postimg.org/x4jihvp0x/lim2.png" alt="LIM2"></p>
+
+<h1>
+<a id="the-nyströmcore-matlab-package" class="anchor" href="#the-nystr%C3%B6mcore-matlab-package" aria-hidden="true"><span class="octicon octicon-link"></span></a>The NyströmCoRe Matlab Package</h1>
+
+<p><strong><em>Less is More: Nyström Computational Regularization</em></strong></p>
+
+<p><img src="http://s4.postimg.org/e8cnt4sst/LIS1.png" alt="LIM1"></p>
+
+<p>Copyright (C) 2015, <a href="http://lcsl.mit.edu/#/home">Laboratory for Computational and Statistical Learning</a> (IIT@MIT).
+All rights reserved.</p>
+
+<p><em>By Raffaello Camoriano, Alessandro Rudi and Lorenzo Rosasco</em></p>
+
+<p><em>Contact: <a href="mailto:raffaello.camoriano@iit.it">raffaello.camoriano@iit.it</a></em></p>
+
+<p>Please check the attached license file.</p>
+
+<h1>
+<a id="introduction" class="anchor" href="#introduction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction</h1>
+
+<p>This Matlab package provides an implementation of the Nyström Computational Regularization algorithm presented in the following work:</p>
+
+<blockquote>
+<p><em>Alessandro Rudi, Raffaello Camoriano, Lorenzo Rosasco</em>, <strong><em>Less is More: Nyström Computational Regularization</em></strong>, 16 Jul 2015, <a href="http://arxiv.org/abs/1507.04717">http://arxiv.org/abs/1507.04717</a></p>
+
+<p>We study Nyström type subsampling approaches to large scale kernel methods, and prove learning bounds in the statistical learning setting, where random sampling and high probability estimates are considered. In particular, we prove that these approaches can achieve optimal learning bounds, provided the subsampling level is suitably chosen. These results suggest a simple incremental variant of Nyström Kernel Regularized Least Squares, where the subsampling level implements a form of computational regularization, in the sense that it controls at the same time regularization and computations. Extensive experimental analysis shows that the considered approach achieves state of the art performances on benchmark large scale datasets. </p>
+</blockquote>
+
+<p>This software package provides a simple and extendible interface to Nyström Computational Regularization. It has been tested on MATLAB r2014b, but should work on newer and older versions too. If it does not, please contact us and/or open an issue. Examples are available  in the "examples" folder.</p>
+
+<h1>
+<a id="examples" class="anchor" href="#examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>Examples</h1>
+
+<h2>
+<a id="automatic-training-with-default-options" class="anchor" href="#automatic-training-with-default-options" aria-hidden="true"><span class="octicon octicon-link"></span></a>Automatic training with default options</h2>
+
+<div class="highlight highlight-source-matlab"><pre>
+<span class="pl-k">load</span> breastcancer
+
+<span class="pl-c">% Perform default cross validation</span>
+[ training_output ] = nystromCoRe_train( Xtr , Ytr );
+
+<span class="pl-c">% Perform predictions on the test set and evaluate results</span>
+[ prediction_output ] = nystromCoRe_test( Xte , Yte , training_output);</pre></div>
+
+<h2>
+<a id="specifying-a-custom-kernel-parameter" class="anchor" href="#specifying-a-custom-kernel-parameter" aria-hidden="true"><span class="octicon octicon-link"></span></a>Specifying a custom kernel parameter</h2>
+
+<div class="highlight highlight-source-matlab"><pre>
+
+<span class="pl-k">load</span> breastcancer
+
+<span class="pl-c">% Customize configuration</span>
+config = config_set(<span class="pl-s"><span class="pl-pds">'</span>kernel.kernelParameter<span class="pl-pds">'</span></span> , <span class="pl-c1">0.9</span> , ...           <span class="pl-c">% Change gaussian kernel parameter (sigma)</span>
+                    <span class="pl-s"><span class="pl-pds">'</span>kernel.kernelFunction<span class="pl-pds">'</span></span> , @gaussianKernel);     <span class="pl-c">% Change kernel function</span>
+
+<span class="pl-c">% Perform default cross validation</span>
+[ training_output ] = nystromCoRe_train( Xtr , Ytr , config);
+
+<span class="pl-c">% Perform predictions on the test set and evaluate results</span>
+[ prediction_output ] = nystromCoRe_test( Xte , Yte , training_output);</pre></div>
+
+<h2>
+<a id="specifying-a-custom-subsampling-level-range" class="anchor" href="#specifying-a-custom-subsampling-level-range" aria-hidden="true"><span class="octicon octicon-link"></span></a>Specifying a custom subsampling level range</h2>
+
+<div class="highlight highlight-source-matlab"><pre>
+<span class="pl-k">load</span> breastcancer
+
+<span class="pl-c">% Customize configuration</span>
+config = config_set(<span class="pl-s"><span class="pl-pds">'</span>kernel.minM<span class="pl-pds">'</span></span> , <span class="pl-c1">10</span> , ...         <span class="pl-c">% Minimum subsampling level</span>
+                    <span class="pl-s"><span class="pl-pds">'</span>kernel.maxM<span class="pl-pds">'</span></span> , <span class="pl-c1">200</span> , ...        <span class="pl-c">% Maximum subsampling level</span>
+                    <span class="pl-s"><span class="pl-pds">'</span>kernel.numStepsM<span class="pl-pds">'</span></span> , <span class="pl-c1">191</span> , ...   <span class="pl-c">% Set m steps (in this version, it must be set to maxM - minM + 1)</span>
+                    <span class="pl-s"><span class="pl-pds">'</span>kernel.kernelParameter<span class="pl-pds">'</span></span> , <span class="pl-c1">0.9</span> , ...           <span class="pl-c">% Change gaussian kernel parameter (sigma)</span>
+                    <span class="pl-s"><span class="pl-pds">'</span>kernel.kernelFunction<span class="pl-pds">'</span></span> , @gaussianKernel);     <span class="pl-c">% Change kernel function</span>
+
+<span class="pl-c">% Perform default cross validation</span>
+[ training_output ] = nystromCoRe_train( Xtr , Ytr , config);
+
+<span class="pl-c">% Perform predictions on the test set and evaluate results</span>
+[ prediction_output ] = nystromCoRe_test( Xte , Yte , training_output);</pre></div>
+
+<h2>
+<a id="some-more-customizations" class="anchor" href="#some-more-customizations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Some more customizations</h2>
+
+<div class="highlight highlight-source-matlab"><pre>
+<span class="pl-k">load</span> breastcancer
+
+<span class="pl-c">% Customize configuration</span>
+config = config_set(<span class="pl-s"><span class="pl-pds">'</span>crossValidation.recompute<span class="pl-pds">'</span></span> , <span class="pl-c1">1</span> , ...           <span class="pl-c">% Recompute the solution after cross validation</span>
+                    <span class="pl-s"><span class="pl-pds">'</span>crossValidation.codingFunction<span class="pl-pds">'</span></span> , @zeroOneBin , ...   <span class="pl-c">% Change coding function</span>
+                    <span class="pl-s"><span class="pl-pds">'</span>crossValidation.errorFunction<span class="pl-pds">'</span></span> , @classificationError , ...   <span class="pl-c">% Change error function</span>
+                    <span class="pl-s"><span class="pl-pds">'</span>kernel.kernelParameter<span class="pl-pds">'</span></span> , <span class="pl-c1">0.9</span> , ...           <span class="pl-c">% Change gaussian kernel parameter (sigma)</span>
+                    <span class="pl-s"><span class="pl-pds">'</span>kernel.kernelFunction<span class="pl-pds">'</span></span> , @gaussianKernel);     <span class="pl-c">% Change kernel function</span>
+
+<span class="pl-c">% Perform default cross validation</span>
+[ training_output ] = nystromCoRe_train( Xtr , Ytr , config);
+
+<span class="pl-c">% Perform predictions on the test set and evaluate results</span>
+[ prediction_output ] = nystromCoRe_test( Xte , Yte , training_output);</pre></div>
+
+<p><strong>For a complete list of customizable configuration options, see the next section.</strong></p>
+
+<h1>
+<a id="configuration-parameters" class="anchor" href="#configuration-parameters" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuration Parameters</h1>
+
+<p>All the configurable parameters of the algorithm can be set by means of the provided <em>config_set</em> function, which returns a custom configuration structure that can be passed to the <em>nystromCoRe_train</em> function. If no configuration structure is passed, <em>nystromCoRe_train</em> uses the default configuration parameters listed below. <em>nystromCoRe_train</em> performs the training by running the NYTRO algorithm. It returns a structure with the trained model, which can then be passed to <em>nystromCoRe_test</em> for performing predictions and test error assessment.</p>
+
+<p>This is an example of how the configuration parameters can be customized by means of the <em>config_set</em> function. See the code in "examples/customCrossValidation.m" for more details.</p>
+
+<div class="highlight highlight-source-matlab"><pre><span class="pl-c">% Customize configuration</span>
+config = config_set(<span class="pl-s"><span class="pl-pds">'</span>crossValidation.recompute<span class="pl-pds">'</span></span> , <span class="pl-c1">1</span> , ...           <span class="pl-c">% Recompute the solution after cross validation</span>
+                    <span class="pl-s"><span class="pl-pds">'</span>crossValidation.codingFunction<span class="pl-pds">'</span></span> , @zeroOneBin , ...   <span class="pl-c">% Change coding function</span>
+                    <span class="pl-s"><span class="pl-pds">'</span>crossValidation.errorFunction<span class="pl-pds">'</span></span> , @classificationError , ...   <span class="pl-c">% Change error function</span>
+                    <span class="pl-s"><span class="pl-pds">'</span>kernel.kernelParameter<span class="pl-pds">'</span></span> , <span class="pl-c1">0.9</span> , ...           <span class="pl-c">% Change kernel parameter (sigma)</span>
+                    <span class="pl-s"><span class="pl-pds">'</span>kernel.kernelFunction<span class="pl-pds">'</span></span> , @gaussianKernel);     <span class="pl-c">% Change kernel function</span></pre></div>
+
+<p><strong>The default configuration parametrs are reported below:</strong></p>
+
+<ul>
+<li>
+<p><strong>Data</strong></p>
+
+<ul>
+<li>data.shuffle = 1</li>
+</ul>
+</li>
+<li>
+<p><strong>Cross Validation</strong></p>
+
+<ul>
+<li>crossValidation.storeTrainingError = 0</li>
+<li>crossValidation.validationPart = 0.2</li>
+<li>crossValidation.recompute = 0</li>
+<li>crossValidation.errorFunction = @rmse
+
+<ul>
+<li>Provided functions (<em>errorFunctions</em> folder):
+
+<ul>
+<li>@rmse: root mean squared error</li>
+<li>@classificationError : Relative classification error (error rate)</li>
+</ul>
+</li>
+<li>Custom functions can be implemented by the user, simply following the input-output structure of any of the provided functions.</li>
+</ul>
+</li>
+<li>crossValidation.codingFunction = [ ]
+
+<ul>
+<li>Provided functions (<em>codingFunctions</em> folder):
+
+<ul>
+<li>@plusMinusOneBin: Class 1: +1, class 2: -1</li>
+<li>@zeroOneBin : Class 1: +1, class 2: 0</li>
+</ul>
+</li>
+<li>Custom functions can be implemented by the user, simply following the input-output structure of any of the provided functions.</li>
+</ul>
+</li>
+<li>crossValidation.stoppingRule = @windowLinearFitting
+
+<ul>
+<li>Provided functions (<em>stoppingRules</em> folder):
+
+<ul>
+<li>@windowSimple: Stops if the ratio e1/e0 &gt;= (1-threshold). e1 is the error of the most recent iteration. e0 is the error of the oldest iteration in the window</li>
+<li>@windowAveraged : Works like @windowSimple, but taking e1 and e0 as the mean over the oldest and newest 10% of the points contained in the window (to increase stability).</li>
+<li>@windowMedian : Works like @windowAveraged, but computes the median rather than the mean.</li>
+<li>@windowLinearFitting : Works like @windowSimple, but uses a linear fitting of all the points in the window to obtain a more stable estimate of e0 and e1.</li>
+</ul>
+</li>
+<li>Custom functions can be implemented by the user, simply following the input-output structure of any of the provided functions.</li>
+</ul>
+</li>
+<li>crossValidation.windowSize = 10</li>
+<li>crossValidation.threshold = 0</li>
+</ul>
+</li>
+<li>
+<p><strong>Filter</strong></p>
+
+<ul>
+<li>filter.numLambdaGuesses  = 11</li>
+<li>filter.lambdaGuesses  = logspace(0,-10,config.filter.numLambdaGuesses)</li>
+</ul>
+</li>
+<li>
+<p><strong>Kernel</strong></p>
+
+<ul>
+<li>kernel.kernelFunction  = @gaussianKernel
+
+<ul>
+<li>Provided functions:
+
+<ul>
+<li>@gaussianKernel : Gaussian kernel function. In this case, the kernel parameter is the bandwidth sigma.</li>
+</ul>
+</li>
+<li>Custom functions can be implemented by the user, simply following the input-output structure of any of the provided functions.</li>
+</ul>
+</li>
+<li>kernel.kernelParameter = 1</li>
+<li>kernel.fixedM = [];</li>
+<li>kernel.minM = 10;</li>
+<li>kernel.maxM = 100;</li>
+<li>kernel.numStepsM = 91;<br>
+</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="output-structures" class="anchor" href="#output-structures" aria-hidden="true"><span class="octicon octicon-link"></span></a>Output structures</h1>
+
+<h2>
+<a id="nystromcore_train" class="anchor" href="#nystromcore_train" aria-hidden="true"><span class="octicon octicon-link"></span></a><em>nystromCoRe_train</em>
+</h2>
+
+<ul>
+<li>
+<p>best.</p>
+
+<ul>
+<li>validationError : Best validation error found in cross validation</li>
+<li>m : Best subsampling level</li>
+<li>alpha : Best coefficients vector</li>
+<li>lambda : Best lambda</li>
+<li>lambdaIdx : Best lambda index</li>
+<li>sampledPoints : Sampled training points associated to the lowest validation error</li>
+</ul>
+</li>
+<li>
+<p>time.</p>
+
+<ul>
+<li>kernelComputation : Time for kernel computation</li>
+<li>crossValidationTrain : Time for filter iterations during cross validation</li>
+<li>crossValidationEval : Time for validation error evaluation during cross validation</li>
+<li>crossValidationTotal : Cumulative cross validation time</li>
+<li>retrainint : Time for retraining after cross validation</li>
+<li>fullTraining : Training time in the just-train case (no cross validation)</li>
+</ul>
+</li>
+<li>
+<p>errorPath.</p>
+
+<ul>
+<li>training : Training error path for each of the computed iterations</li>
+<li>validation : Validation error path for each of the computed iterations</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="nystromcore_test" class="anchor" href="#nystromcore_test" aria-hidden="true"><span class="octicon octicon-link"></span></a><em>nystromCoRe_test</em>
+</h2>
+
+<ul>
+<li>YtePred : Predicted output</li>
+<li>testError : Test error</li>
+<li>time.
+
+<ul>
+<li>kernelComputation : Kernel computation time</li>
+<li>prediction : Prediction computation time</li>
+<li>errorComputation : Error computation time</li>
+</ul>
+</li>
+</ul>
+      </section>
+      <footer>
+        <p>Project maintained by <a href="https://github.com/LCSL">LCSL</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
