@@ -14,7 +14,7 @@ The NyströmCoRe Matlab Package
 Copyright (C) 2015, [Laboratory for Computational and Statistical Learning](http://lcsl.mit.edu/#/home) (IIT@MIT).
 All rights reserved.
 
-*By Raffaello Camoriano, Alessandro Rudi and Lorenzo Rosasco*
+*By Alessandro Rudi, Raffaello Camoriano and Lorenzo Rosasco*
 
 *Contact: raffaello.camoriano@iit.it*
 
