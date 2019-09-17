@@ -23,7 +23,8 @@ Introduction
 
 This Matlab package provides an implementation of the Nyström Computational Regularization algorithm presented in the following work:
 
-> *Alessandro Rudi, Raffaello Camoriano, Lorenzo Rosasco*, ***Less is More: Nyström Computational Regularization***, 16 Jul 2015, http://arxiv.org/abs/1507.04717
+> *Rudi, A., Camoriano, R. and Rosasco, L.*, 2015. **Less is more: Nyström computational regularization.** In Advances in Neural Information Processing Systems (pp. 1657-1665).
+> http://papers.nips.cc/paper/5936-less-is-more-nystrom-computational-regularization.pdf
 
 > We study Nyström type subsampling approaches to large scale kernel methods, and prove learning bounds in the statistical learning setting, where random sampling and high probability estimates are considered. In particular, we prove that these approaches can achieve optimal learning bounds, provided the subsampling level is suitably chosen. These results suggest a simple incremental variant of Nyström Kernel Regularized Least Squares, where the subsampling level implements a form of computational regularization, in the sense that it controls at the same time regularization and computations. Extensive experimental analysis shows that the considered approach achieves state of the art performances on benchmark large scale datasets. 
 
